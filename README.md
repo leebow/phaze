@@ -1,3 +1,6 @@
+![npm](https://badge.fury.io/js/phaze.svg)
+[![travis](https://travis-ci.org/leebow/phaze.svg?branch=master)](https://travis-ci.org/leebow/phaze)
+
 # phaze
 Phaze is a finite state machine for Node robotics. It is intended to help manage the transitions from one state to the next in a deterministic manner.
 
