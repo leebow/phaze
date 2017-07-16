@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/leebow/phaze/issues"
   },
-  "homepage": "https://github.com/leebow/phaze#readme"
+  "homepage": "https://github.com/leebow/phaze#readme",
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mini-mock": "^0.2.1",
+    "mocha": "^3.4.2"
+  }
 }
