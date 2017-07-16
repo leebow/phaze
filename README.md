@@ -15,9 +15,20 @@ A stimulus is required to initiate a transition - this can be an event or an exp
 
 ## Design
 
-**Phaze** is designed to allow a function to be invoked once a state has been **entered**. Once this function has completed, an **output event** is fired, which will initiate a transistion change. This transition will then move the system from the current state to the next state, and so on.
+### States
 
-Persistent storage of state is achieved through passing save and get functions into the initialise function of the state machine. These functions are used to save or retrieve state using injected logic.
+- **Phaze** is designed to allow an optional callback function to be triggered once a state has been **entered**.
+- Once this function has completed, an **output event** is fired, which will initiate a transition change.
+
+### Transitions
+
+- A transition moves the system from the current state to the next state. A transition is triggered by the output event of a previous state.
+- A transition has a many-to-one relationship between states, i.e.: a transition can have **multiple "from" states** but **ONLY one "to" state**.
+
+### Persistence
+
+- Persistent storage of state is achieved through passing save and get functions into the initialise function of the state machine. 
+- These functions are used to save or retrieve state using injected logic.
 
 ## Usage
 
