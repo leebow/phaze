@@ -24,22 +24,38 @@ describe('unit - state machine', function () {
             done();
         });
 
-        it('can transition to the next state and execute go function and then exit', function (done) {
+        it('can transition from one state to the next and execute go function', function (done) {
 
             var self = this;
 
-            var stateA = {
+            self.__currentState = 'startState';
+
+            var startState = {
                 do: function () {
+                },
+                outputEvent: 'startEvent'
+            };
+
+            var stateA = {
+                do: function (callback) {
+                    callback(null, 'Result from stateA');
                 },
                 outputEvent: 'testEvent'
             };
+
             var stateB = {
                 do: function (callback) {
-                    callback(null, 'OK');
+                    callback(null, 'Result from stateB');
                 }
             };
 
-            var transition = {
+            var transition1 = {
+                eventId: 'startEvent',
+                from: ['startState'],
+                to: 'stateA'
+            };
+
+            var transition2 = {
                 eventId: 'testEvent',
                 from: ['stateA'],
                 to: 'stateB'
@@ -48,9 +64,11 @@ describe('unit - state machine', function () {
             var stateMachine = new StateMachine();
 
             var getStateFunc = function (callback) {
-                callback(null, 'stateA');
+                callback(null, self.__currentState);
             };
+
             var saveStateFunc = function (state, callback) {
+                self.__currentState = state;
                 callback();
             };
 
@@ -58,16 +76,18 @@ describe('unit - state machine', function () {
                 if (err)
                     return done(err);
 
+                stateMachine.addState('startState', startState);
                 stateMachine.addState('stateA', stateA);
                 stateMachine.addState('stateB', stateB);
-                stateMachine.addTransition(transition);
+                stateMachine.addTransition(transition1);
+                stateMachine.addTransition(transition2);
 
                 // test the event
-                stateMachine.__trigger('testEvent', function (err, result) {
+                stateMachine.start('startEvent', function (err, result) {
                     if (err)
                         return done(err);
 
-                    expect(result).to.equal('OK');
+                    expect(result).to.equal('Result from stateB');
                     done();
                 })
             });
@@ -135,7 +155,7 @@ describe('unit - state machine', function () {
 
         var stateMachine = new StateMachine();
 
-        stateMachine.initialise(1, getStateFunc, saveStateFunc, function (err) {
+        stateMachine.initialise(2, getStateFunc, saveStateFunc, function (err) {
             if (err)
                 return done(err);
 
@@ -147,15 +167,146 @@ describe('unit - state machine', function () {
             stateMachine.addTransition(transition3);
 
             // test the event
-            stateMachine.__trigger('testEvent', function (err) {
+            stateMachine.start('testEvent', function (err) {
                 if (err)
                     return done(err);
 
-                console.log(self.counter);
                 if (self.counter.funcBCount == 1 &&
                     self.counter.funcCCount == 1)
+
                     done();
             });
+        });
+
+    });
+
+    it('can nest a state machine inside a state', function (done) {
+
+        var self = this;
+
+        /*
+         Outer state machine
+         */
+
+        self.__currentState = 'startState';
+
+        var startState = {
+            do: function () {
+            },
+            outputEvent: 'startEvent'
+        };
+
+        var stateA = {
+            do: function (callback) {
+
+                var __this = this;
+
+                /*
+                 Inner state machine
+                 */
+
+                __this.__currentState = 'innerStartState';
+
+                var innerStartState = {
+                    do: function () {
+                    },
+                    outputEvent: 'innerStartEvent'
+                };
+
+                var innerStateA = {
+                    do: function (callback) {
+                        callback(null, 'Result from innerStateA');
+                    }
+                };
+
+                var innerTransition1 = {
+                    eventId: 'innerStartEvent',
+                    from: ['innerStartState'],
+                    to: 'innerStateA'
+                };
+
+                var innerGetStateFunc = function (callback) {
+                    callback(null, __this.__currentState);
+                };
+
+                var innerSaveStateFunc = function (state, callback) {
+                    __this.__currentState = state;
+                    callback();
+                };
+
+                var innerStateMachine = new StateMachine();
+
+                innerStateMachine.initialise(1, innerGetStateFunc, innerSaveStateFunc, function (err) {
+
+                    if (err)
+                        return done(err);
+
+                    innerStateMachine.addState('innerStartState', innerStartState);
+                    innerStateMachine.addState('innerStateA', innerStateA);
+                    innerStateMachine.addTransition(innerTransition1);
+
+                    console.log('Starting inner state machine....');
+
+                    // test the event
+                    innerStateMachine.start('innerStartEvent', function (err, result) {
+
+                        if (err)
+                            return callback(err);
+
+                        callback(null, 'Result from innerStateA');
+                    })
+                });
+            },
+            outputEvent: 'testEvent'
+        };
+
+        var stateB = {
+            do: function (callback) {
+                callback(null, 'Result from stateB');
+            }
+        };
+
+        var transition1 = {
+            eventId: 'startEvent',
+            from: ['startState'],
+            to: 'stateA'
+        };
+
+        var transition2 = {
+            eventId: 'testEvent',
+            from: ['stateA'],
+            to: 'stateB'
+        };
+
+        var getStateFunc = function (callback) {
+            callback(null, self.__currentState);
+        };
+
+        var saveStateFunc = function (state, callback) {
+            self.__currentState = state;
+            callback();
+        };
+
+        var outerStateMachine = new StateMachine();
+
+        outerStateMachine.initialise(1, getStateFunc, saveStateFunc, function (err) {
+            if (err)
+                return done(err);
+
+            outerStateMachine.addState('startState', startState);
+            outerStateMachine.addState('stateA', stateA);
+            outerStateMachine.addState('stateB', stateB);
+            outerStateMachine.addTransition(transition1);
+            outerStateMachine.addTransition(transition2);
+
+            // test the event
+            outerStateMachine.start('startEvent', function (err, result) {
+                if (err)
+                    return done(err);
+
+                expect(result).to.equal('Result from stateB');
+                done();
+            })
         });
 
     });

@@ -33,38 +33,58 @@ A stimulus is required to initiate a transition - this can be an event or an exp
 - Persistent storage of state is achieved through passing save and get functions into the initialise function of the state machine. 
 - These functions are used to save or retrieve state using injected logic.
 
+### Nesting
+
+- A state machine can be nested within the state of an outer state machine.
+- Construction and initialisation of the inner state machine is done within the **"do"** function of a state.
+  ​
+
 ## Usage
 
 ```javascript
-/***
+/***************
 STATES
-***/
-var stateA = {
+***************/
+var startState = {
   do: function () {
    },
-   outputEvent: 'testEvent'
+   outputEvent: 'startEvent'
  };
 
-var stateB = {
+var walkingState = {
   do: function (callback) {
-    callback(null, 'OK');
+    callback(null, 'Walking...');
+  },
+  outputEvent: 'walkEvent'
+};
+
+// no outputEvent will cause the state machine to exit the loop
+var runningState = {
+  do: function (callback) {
+    callback(null, 'Running...');
   }
 };
 
-/***
-TRANSITION
-***/
-var transition = {
-  eventId: 'testEvent',
-  from: ['stateA'],
-  to: 'stateB'
+/***************
+TRANSITIONS
+***************/
+var transition1 = {
+  eventId: 'startEvent',
+  from: ['startState'],
+  to: 'walkingState'
 };
 
-/***
-STATE PERSISTENCE FUNCTIONS
-***/
+var transition2 = {
+  eventId: 'walkEvent',
+  from: ['walkingState'],
+  to: 'runningState'
+};
+
+/***************
+STATE PERSISTENCE FUNCTIONS (these can wrap database calls etc.)
+***************/
 var getStateFunc = function (callback) {
-  callback(null, 'stateA');
+  callback(null, 'startState');
 };
 
 var saveStateFunc = function (state, callback) {
@@ -76,21 +96,23 @@ STATE MACHINE
 ***/
 var stateMachine = new StateMachine();
 
-// initialise the state machine
+// initialise - first argument is the number of times the machine will loop (0 = infinite)
 stateMachine.initialise(1, getStateFunc, saveStateFunc, function (err) {
   if (err)
     return done(err);
 
-  stateMachine.addState('stateA', stateA);
-  stateMachine.addState('stateB', stateB);
-  stateMachine.addTransition(transition);
+  stateMachine.addState('startState', startState);
+  stateMachine.addState('walkingState', walkingState);
+  stateMachine.addState('runningState', runningState);
+  stateMachine.addTransition(transition1);
+  stateMachine.addTransition(transition2);
 
-  // start the machine
-  stateMachine.start('testEvent', function (err, result) {
+  // start the machine and confirm the final result
+  stateMachine.start('startEvent', function (err, result) {
     if (err)
       return done(err);
 
-    expect(result).to.equal('OK');
+    expect(result).to.equal('Running...');
     done();
   })
 });
