@@ -1,6 +1,6 @@
 {
   "name": "phaze",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Finite state machine for Node robotics",
   "main": "index.js",
   "scripts": {
