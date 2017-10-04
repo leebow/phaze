@@ -116,7 +116,8 @@ describe('unit - state machine', function () {
         };
 
         var stateC = {
-            do: function (callback) {
+            do: function (result, callback) {
+                console.log('PASSED: ', result);
                 self.counter.funcCCount += 1;
                 callback(null, 'OK3');
             },
