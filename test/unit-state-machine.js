@@ -11,88 +11,85 @@ describe('unit - state machine', function () {
 
     this.timeout(30000);
 
-    context('', function () {
+    beforeEach('setup', function (done) {
 
-        beforeEach('setup', function (done) {
+        //var self = this;
+        //var mocker = new Mocker();
+        done();
+    });
 
-            //var self = this;
-            //var mocker = new Mocker();
-            done();
-        });
+    afterEach('stop', function (done) {
+        done();
+    });
 
-        afterEach('stop', function (done) {
-            done();
-        });
+    it('can transition from one state to the next and execute go function', function (done) {
 
-        it('can transition from one state to the next and execute go function', function (done) {
+        var self = this;
 
-            var self = this;
+        self.__currentState = 'startState';
 
-            self.__currentState = 'startState';
+        var startState = {
+            do: function () {
+            },
+            outputEvent: 'startEvent'
+        };
 
-            var startState = {
-                do: function () {
-                },
-                outputEvent: 'startEvent'
-            };
+        var stateA = {
+            do: function (callback) {
+                callback(null, 'Result from stateA');
+            },
+            outputEvent: 'testEvent'
+        };
 
-            var stateA = {
-                do: function (callback) {
-                    callback(null, 'Result from stateA');
-                },
-                outputEvent: 'testEvent'
-            };
+        var stateB = {
+            do: function (callback) {
+                callback(null, 'Result from stateB');
+            }
+        };
 
-            var stateB = {
-                do: function (callback) {
-                    callback(null, 'Result from stateB');
-                }
-            };
+        var transition1 = {
+            eventId: 'startEvent',
+            from: ['startState'],
+            to: 'stateA'
+        };
 
-            var transition1 = {
-                eventId: 'startEvent',
-                from: ['startState'],
-                to: 'stateA'
-            };
+        var transition2 = {
+            eventId: 'testEvent',
+            from: ['stateA'],
+            to: 'stateB'
+        };
 
-            var transition2 = {
-                eventId: 'testEvent',
-                from: ['stateA'],
-                to: 'stateB'
-            };
+        var stateMachine = new StateMachine();
 
-            var stateMachine = new StateMachine();
+        var getStateFunc = function (callback) {
+            callback(null, self.__currentState);
+        };
 
-            var getStateFunc = function (callback) {
-                callback(null, self.__currentState);
-            };
+        var saveStateFunc = function (state, callback) {
+            self.__currentState = state;
+            callback();
+        };
 
-            var saveStateFunc = function (state, callback) {
-                self.__currentState = state;
-                callback();
-            };
+        stateMachine.initialise(1, getStateFunc, saveStateFunc, function (err) {
+            if (err)
+                return done(err);
 
-            stateMachine.initialise(1, getStateFunc, saveStateFunc, function (err) {
+            stateMachine.addState('startState', startState);
+            stateMachine.addState('stateA', stateA);
+            stateMachine.addState('stateB', stateB);
+            stateMachine.addTransition(transition1);
+            stateMachine.addTransition(transition2);
+
+            // test the event
+            stateMachine.start('startEvent', function (err, result) {
                 if (err)
                     return done(err);
 
-                stateMachine.addState('startState', startState);
-                stateMachine.addState('stateA', stateA);
-                stateMachine.addState('stateB', stateB);
-                stateMachine.addTransition(transition1);
-                stateMachine.addTransition(transition2);
-
-                // test the event
-                stateMachine.start('startEvent', function (err, result) {
-                    if (err)
-                        return done(err);
-
-                    expect(result).to.equal('Result from stateB');
-                    done();
-                })
-            });
-
+                expect(result).to.equal('Result from stateB');
+                done();
+            })
         });
+
     });
 
     it('can cycle states when transitions close the loop', function (done) {
@@ -171,8 +168,8 @@ describe('unit - state machine', function () {
                 if (err)
                     return done(err);
 
-                if (self.counter.funcBCount == 1 &&
-                    self.counter.funcCCount == 1)
+                if (self.counter.funcBCount == 2 &&
+                    self.counter.funcCCount == 2)
 
                     done();
             });

@@ -1,0 +1,3 @@
+v0.0.7
+------
+- Bug fix on loop count
